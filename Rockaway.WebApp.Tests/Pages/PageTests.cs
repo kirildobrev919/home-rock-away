@@ -9,5 +9,6 @@ namespace Rockaway.WebApp.Tests.Pages {
 			using var response = await client.GetAsync("/");
 			response.EnsureSuccessStatusCode();
 		}
+		//TODO: REMOVE LATER
 	}
 }
