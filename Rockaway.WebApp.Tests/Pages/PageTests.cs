@@ -1,9 +1,26 @@
 using AngleSharp;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Rockaway.WebApp.Services;
 using Shouldly;
+using System.Text.Json;
 
 namespace Rockaway.WebApp.Tests.Pages {
 	public class PageTests {
+
+		private static readonly JsonSerializerOptions jsonSerializerOptions = new(JsonSerializerDefaults.Web);
+
+		private static readonly ServerStatus testStatus = new() {
+			Assembly = "TEST_ASSEMBLY",
+			Modified = new DateTimeOffset(2021, 2, 3, 4, 5, 6, TimeSpan.Zero).ToString("O"),
+			Hostname = "TEST_HOSTNAME",
+			DateTime = new DateTimeOffset(2022, 3, 4, 5, 6, 7, TimeSpan.Zero).ToString("O")
+		};
+
+		private class TestStatusReporter : IStatusReporter {
+			public ServerStatus GetStatus() => testStatus;
+		}
+
 		[Fact]
 		public async Task Index_Page_Returns_Success() {
 			await using var factory = new WebApplicationFactory<Program>();
@@ -61,6 +78,27 @@ namespace Rockaway.WebApp.Tests.Pages {
 			listItems.ShouldNotBeNull();
 			listItems.ShouldContain(i => i.InnerHtml.Contains("hello@rockaway.dev"));
 			listItems.ShouldContain(i => i.InnerHtml.Contains("555 1234"));
+		}
+
+		[Fact]
+		public async Task Status_Endpoint_Return_Status() {
+			var factory  = new WebApplicationFactory<Program>();
+			var client = factory.CreateClient();
+			var result = await client.GetAsync("/status");
+			result.EnsureSuccessStatusCode();
+		}
+
+		[Fact]
+		public async Task Status_Endpoint_Return_Status_UsingHostBuilder() {
+			var factory = new WebApplicationFactory<Program>()
+				.WithWebHostBuilder(builder => builder.ConfigureServices(services => {
+					services.AddSingleton<IStatusReporter>(new TestStatusReporter());
+				}));
+			var client = factory.CreateClient();
+			var json = await client.GetStringAsync("/status");
+			var status = JsonSerializer.Deserialize<ServerStatus>(json, jsonSerializerOptions);
+			status.ShouldNotBeNull();
+			status.ShouldBeEquivalentTo(testStatus);
 		}
 	}
 }
