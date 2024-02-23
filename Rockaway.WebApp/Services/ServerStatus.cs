@@ -4,5 +4,6 @@ namespace Rockaway.WebApp.Services {
 		public string Modified { get; set; } = String.Empty;
 		public string Hostname { get; set; } = String.Empty;
 		public string DateTime { get; set; } = String.Empty;
+		public string RunningTime {  get; set; } = String.Empty;
 	}
 }

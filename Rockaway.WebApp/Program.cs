@@ -36,5 +36,6 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapGet("/status", (IStatusReporter reporter) => reporter.GetStatus());
+app.MapGet("/uptime", (IStatusReporter reporter) => reporter.GetUptimeInSeconds());
 
 app.Run();
