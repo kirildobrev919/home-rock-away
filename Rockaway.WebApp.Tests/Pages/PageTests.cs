@@ -14,11 +14,16 @@ namespace Rockaway.WebApp.Tests.Pages {
 			Assembly = "TEST_ASSEMBLY",
 			Modified = new DateTimeOffset(2021, 2, 3, 4, 5, 6, TimeSpan.Zero).ToString("O"),
 			Hostname = "TEST_HOSTNAME",
-			DateTime = new DateTimeOffset(2022, 3, 4, 5, 6, 7, TimeSpan.Zero).ToString("O")
+			DateTime = new DateTimeOffset(2022, 3, 4, 5, 6, 7, TimeSpan.Zero).ToString("O"),
+			RunningTime = "Up and running for - 1 hours, 10 minutes, 11 seconds"
 		};
+
+		private static long expectedSeconds = 4211;
 
 		private class TestStatusReporter : IStatusReporter {
 			public ServerStatus GetStatus() => testStatus;
+
+			public long GetUptimeInSeconds() => expectedSeconds;
 		}
 
 		[Fact]
@@ -99,6 +104,26 @@ namespace Rockaway.WebApp.Tests.Pages {
 			var status = JsonSerializer.Deserialize<ServerStatus>(json, jsonSerializerOptions);
 			status.ShouldNotBeNull();
 			status.ShouldBeEquivalentTo(testStatus);
+		}
+
+		[Fact]
+		public async Task Uptime_Endpoint_Return_Status() {
+			var factory = new WebApplicationFactory<Program>();
+			var client = factory.CreateClient();
+			var result = await client.GetAsync("/uptime");
+			result.EnsureSuccessStatusCode();
+		}
+
+		[Fact]
+		public async Task Uptime_Endpoint_Return_runningTimeInSeconds_UsingHostBuilder() {
+			var factory = new WebApplicationFactory<Program>()
+				.WithWebHostBuilder(builder => builder.ConfigureServices(services => {
+					services.AddSingleton<IStatusReporter>(new TestStatusReporter());
+				}));
+			var client = factory.CreateClient();
+			var uptime = await client.GetStringAsync("/uptime");
+			uptime.ShouldNotBeNull();
+			uptime.ShouldBeEquivalentTo(expectedSeconds.ToString());
 		}
 	}
 }
