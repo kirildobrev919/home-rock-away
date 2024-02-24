@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Rockaway.WebApp.Data;
+using Rockaway.WebApp.Hosting;
 using Rockaway.WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,9 +11,22 @@ builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IStatusReporter>(new StatusReporter());
 
-var sqliteConnection = new SqliteConnection("Data Source=:memory:");
-sqliteConnection.Open();
-builder.Services.AddDbContext<RockawayDbContext>(options => options.UseSqlite(sqliteConnection));
+var logger = CreateAdHocLogger<Program>();
+
+logger.LogInformation("Rockaway running in {environment} environment", builder.Environment.EnvironmentName);
+// A bug in .NET 8 means you can't call extension methods from Program.Main, otherwise
+// the aspnet-codegenerator tools fail with "Could not get the reflection type for DbContext"
+// ReSharper disable once InvokeAsExtensionMethod
+if (HostEnvironmentExtensions.UseSqlite(builder.Environment)) {
+	logger.LogInformation("Using Sqlite database");
+	var sqliteConnection = new SqliteConnection("Data Source=:memory:");
+	sqliteConnection.Open();
+	builder.Services.AddDbContext<RockawayDbContext>(options => options.UseSqlite(sqliteConnection));
+} else {
+	logger.LogInformation("Using SQL Server database");
+	var connectionString = builder.Configuration.GetConnectionString("LOCAL_DB_AZURE_REPLACEMENT");
+	builder.Services.AddDbContext<RockawayDbContext>(options => options.UseSqlServer(connectionString));
+}
 
 builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 var app = builder.Build();
@@ -30,6 +44,8 @@ if (!app.Environment.IsDevelopment()) {
 	app.UseExceptionHandler("/Error");
 	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 	app.UseHsts();
+} else {
+	app.UseDeveloperExceptionPage();
 }
 
 using (var scope = app.Services.CreateScope()) {
@@ -50,3 +66,12 @@ app.MapGet("/uptime", (IStatusReporter reporter) => reporter.GetUptimeInSeconds(
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+ILogger<T> CreateAdHocLogger<T>() {
+	var config = new ConfigurationBuilder()
+		.AddJsonFile("appsettings.json", false, true)
+		.AddEnvironmentVariables()
+		.AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", true, true)
+		.Build();
+	return LoggerFactory.Create(lb => lb.AddConfiguration(config)).CreateLogger<T>();
+}
