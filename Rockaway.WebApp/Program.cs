@@ -3,17 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using Rockaway.WebApp.Data;
 using Rockaway.WebApp.Hosting;
 using Rockaway.WebApp.Services;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var logger = CreateAdHocLogger<Program>();
+logger.LogInformation("Rockaway running in {environment} environment", builder.Environment.EnvironmentName);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IStatusReporter>(new StatusReporter());
 
-var logger = CreateAdHocLogger<Program>();
-
-logger.LogInformation("Rockaway running in {environment} environment", builder.Environment.EnvironmentName);
 // A bug in .NET 8 means you can't call extension methods from Program.Main, otherwise
 // the aspnet-codegenerator tools fail with "Could not get the reflection type for DbContext"
 // ReSharper disable once InvokeAsExtensionMethod
@@ -29,6 +30,8 @@ if (HostEnvironmentExtensions.UseSqlite(builder.Environment)) {
 }
 
 builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<RockawayDbContext>();
+
 var app = builder.Build();
 
 //app.Logger.LogDebug("This is a DEBUG message.");
