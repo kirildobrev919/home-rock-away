@@ -50,7 +50,15 @@ if (!app.Environment.IsDevelopment()) {
 
 using (var scope = app.Services.CreateScope()) {
 	using var db = scope.ServiceProvider.GetService<RockawayDbContext>()!;
-	db.Database.EnsureCreated();
+	if (app.Environment.UseSqlite()) {
+		db.Database.EnsureCreated();
+	} else if (Boolean.TryParse(app.Configuration["apply-migrations"], out var applyMigrations) && applyMigrations) {
+		//TODO: This section is needed when ci cd auto migration db from github to azur for production. Chapter 3.4
+		//Log.Information("apply-migrations=true was specified. Applying EF migrations and then exiting.");
+		db.Database.Migrate();
+		//Log.Information("EF database migrations applied successfully.");
+		Environment.Exit(0);
+	}
 }
 
 app.UseHttpsRedirection();
