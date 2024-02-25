@@ -48,4 +48,3 @@ public class Venue {
 	[Url]
 	public string? WebsiteUrl { get; set; }
 }
-
