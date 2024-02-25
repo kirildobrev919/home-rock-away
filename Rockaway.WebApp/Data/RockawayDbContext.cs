@@ -15,7 +15,10 @@ public class RockawayDbContext(DbContextOptions<RockawayDbContext> options) : Id
 
 		// Override EF Core's default table naming (which pluralizes entity names)
 		// and use the same names as the C# classes instead
-		foreach (var entity in modelBuilder.Model.GetEntityTypes()) {
+		var rockawayEntityNamespace = typeof(Artist).Namespace;
+		// singular table names only for specified namespace models
+		var rockawayEntities = modelBuilder.Model.GetEntityTypes().Where(e => e.ClrType.Namespace == rockawayEntityNamespace);
+		foreach (var entity in rockawayEntities) {
 			entity.SetTableName(entity.DisplayName());
 		}
 
@@ -29,7 +32,7 @@ public class RockawayDbContext(DbContextOptions<RockawayDbContext> options) : Id
 
 		modelBuilder.Entity<Artist>().HasData(SampleData.Artists.AllArtists);
 		modelBuilder.Entity<Venue>().HasData(SampleData.Venues.AllVenues);
+		//TODO: Delete this account when deploy to production.
+		modelBuilder.Entity<IdentityUser>().HasData(SampleData.Users.Admin);
 	}
-
-public DbSet<Rockaway.WebApp.Data.Entities.Venue> Venue { get; set; } = default!;
 }
