@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Rockaway.WebApp.Data;
 using Rockaway.WebApp.Data.Entities;
 
-namespace Rockaway.WebApp.Controllers {
+namespace Rockaway.WebApp.Areas.Admin.Controllers {
+
+	[Area("admin")]
 	public class VenuesController : Controller {
 		private readonly RockawayDbContext _context;
 
