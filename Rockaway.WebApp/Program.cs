@@ -11,7 +11,7 @@ var logger = CreateAdHocLogger<Program>();
 logger.LogInformation("Rockaway running in {environment} environment", builder.Environment.EnvironmentName);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options => options.Conventions.AuthorizeAreaFolder("admin", "/"));
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IStatusReporter>(new StatusReporter());
 
