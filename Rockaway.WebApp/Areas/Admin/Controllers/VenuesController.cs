@@ -3,84 +3,86 @@ using Microsoft.EntityFrameworkCore;
 using Rockaway.WebApp.Data;
 using Rockaway.WebApp.Data.Entities;
 
-namespace Rockaway.WebApp.Controllers {
-	public class ArtistsController : Controller {
+namespace Rockaway.WebApp.Areas.Admin.Controllers {
+
+	[Area("admin")]
+	public class VenuesController : Controller {
 		private readonly RockawayDbContext _context;
 
-		public ArtistsController(RockawayDbContext context) {
+		public VenuesController(RockawayDbContext context) {
 			_context = context;
 		}
 
-		// GET: Artists
+		// GET: Venues
 		public async Task<IActionResult> Index() {
-			return View(await _context.Artists.ToListAsync());
+			return View(await _context.Venues.ToListAsync());
 		}
 
-		// GET: Artists/Details/5
+		// GET: Venues/Details/5
 		public async Task<IActionResult> Details(Guid? id) {
 			if (id == null) {
 				return NotFound();
 			}
 
-			var artist = await _context.Artists
+			var venue = await _context.Venues
 				.FirstOrDefaultAsync(m => m.Id == id);
-			if (artist == null) {
+			if (venue == null) {
 				return NotFound();
 			}
 
-			return View(artist);
+			return View(venue);
 		}
 
-		// GET: Artists/Create
+		// GET: Venues/Create
 		public IActionResult Create() {
 			return View();
 		}
 
-		// POST: Artists/Create
+		// POST: Venues/Create
 		// To protect from overposting attacks, enable the specific properties you want to bind to.
 		// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create([Bind("Id,Name,Description,Slug")] Artist artist) {
+		public async Task<IActionResult> Create([Bind("Id,Name,Slug,Address,City,CountryCode,PostalCode,Telephone,WebsiteUrl")] Venue venue) {
 			if (ModelState.IsValid) {
-				artist.Id = Guid.NewGuid();
-				_context.Add(artist);
+				venue.Id = Guid.NewGuid();
+				_context.Add(venue);
 				await _context.SaveChangesAsync();
 				return RedirectToAction(nameof(Index));
 			}
-			return View(artist);
+			return View(venue);
 		}
 
-		// GET: Artists/Edit/5
+		// GET: Venues/Edit/5
 		public async Task<IActionResult> Edit(Guid? id) {
 			if (id == null) {
 				return NotFound();
 			}
 
-			var artist = await _context.Artists.FindAsync(id);
-			if (artist == null) {
+			var venue = await _context.Venues.FindAsync(id);
+			if (venue == null) {
 				return NotFound();
 			}
-			return View(artist);
+			return View(venue);
 		}
 
-		// POST: Artists/Edit/5
+		// POST: Venues/Edit/5
 		// To protect from overposting attacks, enable the specific properties you want to bind to.
 		// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,Description,Slug")] Artist artist) {
-			if (id != artist.Id) {
+		public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,Slug,Address,City,CountryCode,PostalCode,Telephone,WebsiteUrl")] Venue venue) {
+			if (id != venue.Id) {
 				return NotFound();
 			}
 
 			if (ModelState.IsValid) {
 				try {
-					_context.Update(artist);
+					_context.Update(venue);
 					await _context.SaveChangesAsync();
 				}
 				catch (DbUpdateConcurrencyException) {
-					if (!ArtistExists(artist.Id)) {
+					if (!VenueExists(venue.Id)) {
 						return NotFound();
 					} else {
 						throw;
@@ -88,39 +90,39 @@ namespace Rockaway.WebApp.Controllers {
 				}
 				return RedirectToAction(nameof(Index));
 			}
-			return View(artist);
+			return View(venue);
 		}
 
-		// GET: Artists/Delete/5
+		// GET: Venues/Delete/5
 		public async Task<IActionResult> Delete(Guid? id) {
 			if (id == null) {
 				return NotFound();
 			}
 
-			var artist = await _context.Artists
+			var venue = await _context.Venues
 				.FirstOrDefaultAsync(m => m.Id == id);
-			if (artist == null) {
+			if (venue == null) {
 				return NotFound();
 			}
 
-			return View(artist);
+			return View(venue);
 		}
 
-		// POST: Artists/Delete/5
+		// POST: Venues/Delete/5
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteConfirmed(Guid id) {
-			var artist = await _context.Artists.FindAsync(id);
-			if (artist != null) {
-				_context.Artists.Remove(artist);
+			var venue = await _context.Venues.FindAsync(id);
+			if (venue != null) {
+				_context.Venues.Remove(venue);
 			}
 
 			await _context.SaveChangesAsync();
 			return RedirectToAction(nameof(Index));
 		}
 
-		private bool ArtistExists(Guid id) {
-			return _context.Artists.Any(e => e.Id == id);
+		private bool VenueExists(Guid id) {
+			return _context.Venues.Any(e => e.Id == id);
 		}
 	}
 }
